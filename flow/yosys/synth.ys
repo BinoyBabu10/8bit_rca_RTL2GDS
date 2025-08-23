@@ -1,0 +1,38 @@
+# ========= Yosys Synthesis Script =========
+
+# Read RTL design
+read_verilog rtl/8bitrca.v
+
+# Set top module
+hierarchy -check -top ripple_carry_adder
+
+# Generic synthesis
+proc
+opt
+fsm
+opt
+memory
+opt
+flatten              # <-- ensures full_adder is flattened into gates
+techmap
+opt
+
+# Map DFFs to liberty cells
+dfflibmap -liberty /home/binoy/OpenROAD-flow-scripts/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib
+
+# Map combinational logic to liberty cells
+abc -liberty /home/binoy/OpenROAD-flow-scripts/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib
+
+# Cleanup
+clean
+
+# Write gate-level netlist
+write_verilog -noattr results/netlist.v
+
+# Save synthesis statistics
+tee -o results/netlist_stat.txt stat -liberty /home/binoy/OpenROAD-flow-scripts/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib
+
+# Generate schematic (DOT + PDF for visualization)
+show -format dot -prefix results/rca_schematic -colors 2 -width -stretch
+
+
